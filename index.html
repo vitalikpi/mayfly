@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>≽༏≼ Mayfly</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main>
+        <h1>≽༏≼ Mayfly</h1>
+        <p>Share a secret once. It is destroyed the first time it is read.</p>
+
+        <form id="create">
+            <textarea id="secret" required autofocus></textarea>
+            <button type="submit">Share</button>
+        </form>
+
+        <div id="result" hidden>
+            <p>Share this link. It can be opened only once:</p>
+            <input id="link" readonly>
+            <a href="/">back</a>
+        </div>
+
+        <p id="error"></p>
+    </main>
+
+    <script src="/app.js"></script>
+    <script>
+        // --- create flow: encrypt in the browser, send only ciphertext ---
+        const form = document.getElementById("create");
+        const result = document.getElementById("result");
+        const link = document.getElementById("link");
+        const error = document.getElementById("error");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            error.textContent = "";
+            try {
+                const { key, blob } = await encrypt(document.getElementById("secret").value);
+
+                const res = await fetch("/api/secrets", { method: "POST", body: blob });
+                if (!res.ok) throw new Error("server returned " + res.status);
+                const id = (await res.text()).trim();
+
+                // The key goes after '#', so it never leaves the browser.
+                link.value = location.origin + "/s/" + id + "#" + key;
+                form.hidden = true;
+                result.hidden = false;
+                link.select();
+            } catch (err) {
+                error.textContent = "Could not create secret: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>

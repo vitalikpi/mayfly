@@ -1,0 +1,10 @@
+.git
+.idea
+/mayfly
+*.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+Caddyfile
+.env
+.env.example

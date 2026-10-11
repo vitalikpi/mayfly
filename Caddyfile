@@ -1,0 +1,4 @@
+{$DOMAIN} {
+	reverse_proxy mayfly:8080
+	header Strict-Transport-Security "max-age=63072000"
+}

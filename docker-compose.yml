@@ -1,0 +1,29 @@
+services:
+  mayfly:
+    build: .
+    restart: unless-stopped
+    environment:
+      TTL: ${TTL:-24h}
+      MAX_ENTRIES: ${MAX_ENTRIES:-10000}
+      MAX_SIZE: ${MAX_SIZE:-524288}
+    # No published ports: mayfly is reachable only by Caddy over the internal
+    # Docker network, never directly from the host/internet.
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - mayfly
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # persists Let's Encrypt certs across restarts
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>≽༏≼ Mayfly</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main>
+        <h1>≽༏≼ Mayfly</h1>
+        <p>Opening this secret destroys it. You can read it only once.</p>
+
+        <button id="reveal">Reveal secret</button>
+
+        <pre id="secret" hidden></pre>
+        <p id="error"></p>
+
+        <p><a href="/">back</a></p>
+    </main>
+
+    <script src="/app.js"></script>
+    <script>
+        window.addEventListener("pageshow", (e) => { // prevent showing cached content
+            if (e.persisted) location.reload();
+        });
+
+        const revealBtn = document.getElementById("reveal");
+        const secretBox = document.getElementById("secret");
+        const error = document.getElementById("error");
+
+        const id = location.pathname.split("/").pop();
+        const key = location.hash.slice(1);
+
+        revealBtn.addEventListener("click", async () => {
+            revealBtn.disabled = true; // fetch burns the secret; prevent double-click
+            error.textContent = "";
+
+            if (!key) {
+                error.textContent = "This link is missing its decryption key.";
+                return;
+            }
+            try {
+                const res = await fetch("/api/secrets/" + id);
+                if (res.ok) {
+                    const blob = new Uint8Array(await res.arrayBuffer());
+                    secretBox.textContent = await decrypt(blob, key);
+                    secretBox.hidden = false;
+                    revealBtn.hidden = true;
+                } else if (res === 404) {
+                    error.textContent = "Oops... Your secret is already gone. Rotate it if you think someone stole it.";
+                } else {
+                    error.textContent = "Oops... It is " + res.status + " " + res.statusText + ". Let us know.";
+                }
+            } catch (err) {
+                error.textContent = "Could not decrypt this secret (wrong or corrupted link).";
+            }
+        });
+    </script>
+</body>
+</html>
